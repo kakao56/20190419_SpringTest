@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="mapper">
+	<resultMap type="map" id="listMap">
+		<result column="seq" property="seq"/>
+		<result column="mem_name" property="name"/>
+		<result column="mem_id" property="id"/>
+		<result column="board_subject" property="subject"/>
+		<result column="board_content" property="content"/>
+		<result column="reg_date" property="rDate"/>
+		<result column="upt_date" property="uDate"/>
+		<result column="view_cnt" property="vCnt"/>
+	</resultMap>
+	
+	<sql id="searchOption">
+		<if test="searchType != null and searchType != '전체'">
+			<choose>
+				<when test="searchType == '제목'">
+					and board_subject like '%'||#{searchValue}||'%'
+				</when>
+				<when test="searchType == '아이디'">
+					and mem_id like '%'||#{searchValue}||'%'
+				</when>
+				<when test="searchType == '내용'">
+					and board_content like '%'||#{searchValue}||'%'
+				</when>
+			</choose>
+		</if>
+		<if test="stDate != null">
+			<if test="stDate != '' and endDate != ''">
+				and (reg_date between #{stDate} and #{endDate})
+			</if>
+		</if>
+	</sql>
+	
+	<select id="getTotalCount" resultType="int">
+		select
+			count(*)
+		from board_study
+		where 1=1
+		<include refid="searchOption"></include>
+	</select>
+
+	<select id="getList" resultMap="listMap">
+		select *
+		from
+			(select 
+				rownum rnum
+				,a.* 
+			from
+				(select
+					seq
+					,mem_name
+					,mem_id
+					,board_subject
+					,board_content
+					,reg_date
+					,upt_date
+					,view_cnt
+				from board_study
+				where 1=1
+				<include refid="searchOption"></include>
+				order by seq desc) a)
+		where (rnum between #{begin} and #{end})
+		
+	</select>
+</mapper>
